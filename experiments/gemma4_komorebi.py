@@ -4,8 +4,6 @@ Gemma 4 E2B × Komorebi — steering 効果測定
 Bonsai での実験と同じ probe で測定し、素 vs Komorebi を比較する。
 """
 
-import sys
-sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent.parent))
 
 import mlx.core as mx
 import time

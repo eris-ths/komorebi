@@ -5,8 +5,6 @@ alpha_schedule + hidden_size 正規化で、
 Bonsai の知見が Gemma 4 に移植できるか検証。
 """
 
-import sys
-sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent.parent))
 
 import mlx.core as mx
 

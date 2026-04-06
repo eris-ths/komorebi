@@ -7,8 +7,6 @@ VLIW のエッセンスを LLM steering に適用:
   3. layer skip（速度最適化の初期実験）
 """
 
-import sys
-sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent.parent))
 
 import mlx.core as mx
 import numpy as np

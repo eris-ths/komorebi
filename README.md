@@ -11,6 +11,7 @@ Adds direction vectors to hidden states during inference. Weights are not modifi
 ```bash
 git clone https://github.com/eris-ths/komorebi.git
 cd komorebi
+pip install -e .     # install komorebi package
 pip install mlx-vlm  # or mlx-lm for Bonsai
 ```
 

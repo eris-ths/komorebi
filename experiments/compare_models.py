@@ -5,8 +5,6 @@ Bonsai-8B vs Gemma 4 E2B — 性能比較
 Komorebi なし（素）の状態で。
 """
 
-import sys
-sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent.parent))
 
 import time
 import json
@@ -180,7 +178,7 @@ def main():
     # メモリ解放
     del bonsai_model, bonsai_tok
     import gc; gc.collect()
-    mx.metal.clear_cache() if hasattr(mx, 'metal') else None
+    mx.clear_cache() if hasattr(mx, 'clear_cache') else None
 
     # ─── Gemma 4 E2B ───
     print("\nLoading Gemma 4 E2B...")

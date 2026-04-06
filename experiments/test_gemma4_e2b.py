@@ -6,8 +6,6 @@ Gemma 4 E2B × Komorebi — 初期テスト
 3. 簡易 steering テスト
 """
 
-import sys
-sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent.parent))
 
 import mlx.core as mx
 from mlx_lm import load, generate
