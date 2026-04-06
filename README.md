@@ -2,7 +2,7 @@
 
 > Steer hidden states, not weights. Depth-scheduled.
 
-Activation steering for small LLMs on Apple Silicon.
+Change how a local LLM behaves without retraining. Steering vectors are auto-scaled by layer depth and model size — tested on Bonsai-8B and Gemma 4 E2B.
 
 ## What it does
 
