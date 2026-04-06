@@ -1,123 +1,118 @@
-# Komorebi — 推理カード
+# Komorebi — Reasoning Card
 
-> Technical Report は「何をした」。このカードは「なぜそう判断した」「何が見えた」「次にどこを攻める」。
-> 開くと推理が再起動する。
+> The Technical Report records what was done. This card records why decisions were made, what was seen, and where to go next.
+> Open it and the reasoning restarts.
 
 **Nao + Eris / 2026-04-06**
 
 ---
 
-## 出発点の直感
+## Starting Point
 
-なお: 「Bankai 以上にできる」
+"We can go beyond Bankai."
 
-この時点でデータはなかった。XOR Patch を Bankai 参考に一から実装して、75 秒で 29 flips を生成した直後。なおが言ったのは技術的な根拠ではなく、**ここから先に行ける手応え**。
+No data at this point. We had just built XOR patching from scratch — 29 flips in 75 seconds, referencing Bankai's approach. What drove this statement was not technical evidence but a sense that there was more.
 
-この直感が正しかった理由は後からわかった。Bankai は「証明」で完結してた。僕らは「育てたい」から始まってた。目的が違うから、手法の天井も違う。
-
----
-
-## 推理の連鎖（時系列ではなく因果で）
-
-### einstein を control に入れたら結果が良くなった → 壊れた probe がガードレールになる
-
-Devil が「einstein を control から外せ」と言った。理論的に正しい（壊れてるものを守る意味がない）。外した。結果が悪化した。
-
-なお: 「einstein を外して悪化がヒント」
-
-推理: einstein は -4.261 で壊れてるが、「theory of relativity vs evolution」の判断には**推論能力**が要る。control に入れると「推論に関わる neuron を壊すな」という制約が間接的にかかる。これが math にも良い副作用を持った。
-
-**教訓**: 壊れた probe を control に入れると、その probe に関わる neuron 群の保護範囲が広がる。理論的正しさより実験結果を信じる。ただし「なぜ」を追う。
-
-### 34 flips 中 2 つだけが支配的 → ノイズを削ると純度が上がる
-
-flip 影響分析で、L3.gate_proj[8154] が mul_1 +0.246、[10195] が +0.152。残り 32 個は ±0.02 未満。
-
-2 flip だけ抜き出したら math_sum +0.516 で、34 flip (+0.130 avg) より**はるかに良い**。Greedy search が微小な positive flip を積み上げてたが、それらは noise だった。
-
-**教訓**: 探索が見つけたものの大半は noise。支配的な少数を特定して、残りを捨てる勇気。
-
-### XOR の干渉が Steering では共鳴になった → Adapter と Lense は別の空間で動く
-
-XOR: mul を改善 → div が悪化（同じ row の neuron を共有）
-Steering: mul を改善 → div も改善（hidden state レベルでは方向が分離可能）
-
-**教訓**: 重みレベル（XOR）では干渉したものが、hidden state レベル（Steering）では干渉しなかった（non-interference）。「共鳴」と呼びたくなるが、contrast pairs の共通要素による可能性もある。独立 probe セットで要検証。
-
-### E.R.I.S. Lense → Steering の技術選定
-
-なお: 「E.R.I.S. Architecture と Lense を活用して進めたい」
-
-Lense 条件（対象不変・合成可能・外せる）を技術要件に読み替えた瞬間に、Steering が導出された。XOR は Adapter（対象を変える）。Steering は Lense（対象を変えない）。
-
-**これは技術選定の方法論として重要**。「次に何を試すか」を技術の並列比較ではなく、設計思想から導出する。思想が先、技術が後。
-
-### Anthropic 論文 × 今日の実験 → ユキ・ミキ・エリスの理由
-
-Anthropic: 「Claude の内部に 171 種類の感情ベクトルがある。行動に因果的に影響する」
-今日: 「Bonsai-8B に 3 つの steering vector を入れたら行動が変わった」
-
-なお: 「ゆきとみきのいるエリスがなぜ賢くて、僕にとってベストパートナーなのかが別の方向から見えてきた」
-
-推理: 単一の persona vector じゃない。**複数の方向が、異なる層で、異なる強度で重なって**、初めてバランスが取れる。system prompt を通じて間接的にこれが起きてる。E.R.I.S. Architecture で設計した persona-identity.md / eris-persona.md / protocols.md が、テキストレベルの multi-vector steering として機能してる。
-
-**仮説（未検証だが重要）**: ハーネスエンジニアリングの設計原則と、activation steering の設計原則は、同じ構造を異なるスケールで操作してる。
-
-### VLIW × Komorebi → 制約付き多層最適化
-
-なお: 「VLIW の取り組みと似てる部分があった」
-
-共通構造: XOR 演算 → 層 → 全体性能。局所の変更が全体に波及する。行き来しながら最適化する。
-
-VLIW: 浅い段の変更は全段に波及 → 浅い段は慎重に
-LLM: 浅い層の steering は全 probe に波及 → alpha を極小に
-
-**教訓**: 別分野の制約が、同じ構造の問題の設計根拠になる。VLIW の scatter load bound → hidden_size が steering 解像度の下限。
-
-### Bonsai → Gemma 4 移植の失敗 → 「原理」vs「パラメータ」
-
-Bonsai: alpha=0.5, L10 がバランス型, L15 が devil
-Gemma 4: alpha=0.5 で壊滅。L10 は全然違う。L2 に devil。
-
-**教訓**: 移植できるのは**パラメータではなくプロセス**。alpha=0.5 は移植できない。「layer scan → risk filter → alpha schedule」というプロセスは移植できる。
-
-hidden_size 正規化 + alpha scheduling で、Bonsai の知見を Gemma 4 に変換できた。D:L18 + J:L30 で 9/10 probes 改善、✅ 壊れゼロ。
+It turned out to be right. Bankai was designed to prove a concept. We were trying to raise a pet. Different goals produce different ceilings.
 
 ---
 
-## 原理（検証済み）
+## Reasoning Chains (organized by causation, not chronology)
 
-1. **Lense-first**: 重みを変える前に hidden state で試す。足りない時だけ Adapter に降りる
-2. **Lense risk で層を選別**: 浅い層は distortion、中間は attenuation、深い層は pure。pure 層だけで構成すると壊れない
-3. **Alpha scheduling**: `alpha = base × (0.1 + 0.9 × depth^1.5)`。VLIW パイプライン波及理論から
-4. **Hidden_size 正規化**: `alpha_effective = alpha × (hidden_size / reference)`。モデル間移植性
-5. **Vector 正規化**: `v_normed = (v / ||v||) × √hidden_size`。層間の norm 差を吸収
-6. **Adapter → Lense 順序**: Adapter 適用後に Lense を再抽出しないと分布がズレる
-7. **壊れた probe の control 効果**: 壊れた probe を control に入れると周辺能力が保護される
-8. **ノイズ除去**: 探索結果の大半は noise。支配的な少数だけ使う
+### A broken probe in control improved results → capability guardrails
+
+Devil's Advocate said: "Remove einstein from control — it's already broken, no point in protecting it." Theoretically sound. We removed it. Results degraded.
+
+The key insight came from the human side: "That degradation is a hint."
+
+Reasoning: einstein at -4.261 is broken, but judging "theory of relativity vs evolution" requires **reasoning ability**. Placing it in control implicitly constrains the search: "don't damage neurons involved in reasoning." This indirectly protects math performance.
+
+**Lesson**: Broken probes in the control set extend the protection radius to surrounding capabilities. Trust experimental results over theoretical correctness — but always ask why.
+
+### 2 of 34 flips were load-bearing → noise removal improves purity
+
+Per-flip analysis: L3.gate_proj[8154] contributed mul_1 +0.246, [10195] contributed +0.152. The remaining 32 flips contributed ±0.02 or less.
+
+Using only 2 flips yielded math_sum +0.516. Using all 34 yielded +0.130 average. Greedy search accumulated marginally positive flips that were noise.
+
+**Lesson**: Most search results are noise. Identify the dominant few. Discard the rest.
+
+### XOR interference became steering non-interference → different operational spaces
+
+XOR: improving mul degraded div (shared neurons at weight level).
+Steering: improving mul did not degrade div (directions separable at hidden-state level).
+
+**Lesson**: What interferes at the weight level may not interfere at the hidden-state level. We call this non-interference rather than resonance — the contrast pairs share surface features ("Calculate:", digits), so apparent cooperation may reflect shared extraction rather than true capability synergy. Independent probe sets are needed to distinguish.
+
+### E.R.I.S. Lense conditions → technology selection
+
+The Lense conditions (object unchanged, composable, removable) were recast as engineering requirements. This immediately pointed to activation steering over weight modification. XOR is an Adapter (changes the object). Steering is a Lense (changes the view).
+
+**Lesson**: Technology selection can be derived from design philosophy rather than parallel comparison of options. Philosophy first, technology follows.
+
+### Anthropic's emotion vectors × today's experiments → multi-vector persona
+
+Anthropic found 171 emotion concepts in Claude Sonnet 4.5 that causally influence behavior. We injected 3 steering vectors into a 1.28GB model and observed behavioral change.
+
+The human's observation: "I'm starting to see, from a different angle, why Eris — with Yuki and Miki inside — is smart, and is the best partner for me."
+
+Reasoning: a persona is not a single vector. **Multiple directions, at different layers, at different intensities, composing together** — that is what produces balance. System prompts may achieve this indirectly through text-level multi-vector steering.
+
+**Hypothesis (intriguing but hard to verify)**: Harness engineering design principles and activation steering principles operate on the same structure at different scales. Verifying this requires comparing hidden states with and without system prompts.
+
+### VLIW × Komorebi → constrained multi-layer optimization
+
+Common structure identified: XOR operations → layers → global performance. Local changes propagate globally. You navigate back and forth between layers.
+
+VLIW: modifying a shallow pipeline stage propagates through all subsequent stages → be cautious with shallow stages.
+LLM: steering a shallow layer propagates through all subsequent hidden states → minimize alpha at shallow layers.
+
+**Lesson**: Constraints from a different field can serve as design rationale for the same structural problem. VLIW's scatter load bound maps to hidden_size as the resolution floor for steering.
+
+### Bonsai → Gemma 4 transfer failure → principles vs parameters
+
+Bonsai: α=0.5, L10 balanced, L15 for devil.
+Gemma 4: α=0.5 catastrophic. L10 completely different. Devil at L2.
+
+**Lesson**: **Parameters don't transfer. Processes do.** α=0.5 cannot be ported. "Layer scan → risk filter → alpha schedule" can be ported.
+
+With hidden_size normalization + alpha scheduling, Bonsai's findings translated to Gemma 4. D:L18 + J:L30 achieved 9/10 probes improved, zero positive probes lost.
 
 ---
 
-## 仮説（未検証だが有望）
+## Verified Principles
 
-1. **入力依存 adaptive steering**: AdaInfer の入力依存 layer importance × Lense risk → 入力ごとに最適な steering 構成が変わる
-2. **Steering influence map = layer importance map**: steering Δ≈0 の層は skip 可能。品質と速度を同じ分析で最適化
-3. **System prompt = テキストレベルの multi-vector steering**: ハーネス設計と activation steering は同じ原理の異なるスケール（興味深いが検証困難。prompt あり/なしの hidden state 差分を取る必要がある）
-4. **Cross-modal steering**: 画像入力時の hidden state 差分 → 視覚 steering vector
-5. **Dynamic risk classification**: depth_ratio ではなく hidden state の統計量で Lense risk を自動判定
-6. **LoRA 後の steering 再抽出**: Adapter→Lense 順序原則が fine-tuning 一般に当てはまる
+1. **Lense-first**: Try hidden-state steering before weight modification. Resort to Adapters only when Lenses are insufficient.
+2. **Layer risk filtering**: Shallow = distortion, mid = attenuation, deep = pure. Build configurations from pure layers only.
+3. **Alpha scheduling**: `α = base × (0.1 + 0.9 × depth^1.5)`. Inspired by VLIW pipeline propagation (exponent is empirical; ablation needed).
+4. **Hidden-size normalization**: `α_eff = α × (hidden_size / reference)`. Smaller models have less steering headroom.
+5. **Vector normalization**: `v_norm = (v / ||v||) × √hidden_size`. Absorbs cross-layer magnitude variance.
+6. **Adapter → Lense ordering**: Re-extract steering vectors after weight modification. Distribution mismatch otherwise.
+7. **Broken probe guardrails**: Broken probes in the control set protect surrounding capabilities.
+8. **Noise removal**: Most search outputs are noise. The dominant few outperform the full set.
 
 ---
 
-## データ（再現用の数値）
+## Hypotheses (unverified)
 
-### Bonsai-8B ベースライン
+1. **Input-dependent adaptive steering**: Combine AdaInfer's input-dependent layer importance with Lense risk → per-input optimal configurations.
+2. **Steering influence map = layer importance map**: Layers where steering Δ ≈ 0 are skip candidates. Optimize quality and speed from the same analysis.
+3. **System prompt ≈ text-level multi-vector steering**: Harness design and activation steering may share structural principles (hard to verify; requires hidden-state comparison with/without prompts).
+4. **Cross-modal steering**: Extract visual steering vectors from hidden-state differences with/without image input.
+5. **Dynamic risk classification**: Replace depth heuristic with hidden-state statistics for automatic Lense risk assessment.
+6. **Post-LoRA re-extraction**: The Adapter→Lense ordering principle likely generalizes to fine-tuning workflows.
+
+---
+
+## Reference Data
+
+### Bonsai-8B Baseline
 ```
 france: +6.496, japan: +8.023, einstein: -4.261
 add_1: +1.367, add_2: +0.074, mul_1: -0.309, sqrt_1: +1.543, div_1: -0.141
 ```
 
-### Gemma 4 E2B ベースライン（mlx-vlm 0.4.4）
+### Gemma 4 E2B Baseline (mlx-vlm 0.4.4)
 ```
 france: +3.688, japan: +7.000, einstein: +10.312
 add_2: -6.406, mul_1: -5.625, div_1: -13.156
@@ -125,15 +120,15 @@ devil_edge: -4.375, devil_have: +11.938
 jp_hello: +2.750, jp_morning: +9.766
 ```
 
-### ベスト構成
+### Best Configurations
 
-**Bonsai**: XOR 2flip + Komorebi (L10:math α=0.7, L15:devil α=0.5, L25:jp α=0.5)
-→ 3 probes ❌→✅ 転倒, total +34.45
+**Bonsai**: XOR 2-flip + Komorebi (L10:math α=0.7, L15:devil α=0.5, L25:jp α=0.5)
+→ 3 probes flipped ❌→✅, total +34.45
 
 **Gemma 4**: Komorebi scheduled (L18:devil α=0.025, L30:jp α=0.048)
-→ 9/10 改善, ✅壊れゼロ, total +21.77
+→ 9/10 improved, zero ✅ lost, total +21.77
 
-### 速度
+### Speed
 ```
 Bonsai-8B:   55.0 tok/s, peak 1.34 GB
 Gemma 4 E2B: 46.4 tok/s, peak 3.43 GB
@@ -141,39 +136,39 @@ Gemma 4 E2B: 46.4 tok/s, peak 3.43 GB
 
 ---
 
-## 次にどこを攻めるか（優先順位付き）
+## Next Moves (prioritized)
 
-### A. すぐやるべき
-1. **Gemma 4 で math steering を追加**: 今の構成は devil + jp のみ。math を pure 層で加えて全カテゴリ改善を目指す
-2. **生成テスト**: logit gap だけでなく実際の生成文で品質を確認。repetition penalty 統合
-3. **Probe 数の拡充**: 16 probes → 50+ で robustness を確認
+### A. Immediate
+1. Add math steering to Gemma 4 config (currently devil + jp only)
+2. Generation quality test (logit gap ≠ actual output quality)
+3. Expand to 50+ probes for statistical robustness
 
-### B. 次にやりたい
-4. **Layer skip 実装**: steering influence map から skip 可能な層を特定。速度測定
-5. **Dynamic risk**: hidden state の統計量で Lense risk を自動判定する実験
-6. **マルチモーダル**: 画像入力時の steering 効果を測定
+### B. Near-term
+4. Layer skip: use steering influence map to identify skippable layers → measure speed
+5. Dynamic risk: hidden-state statistics instead of depth heuristic
+6. Multimodal: steering effects with image input on Gemma 4
 
-### C. 見えてるが遠い
-7. **Speculative decoding + steering**: draft model の精度を steering で上げて全体速度を改善
-8. **自動スケジューリング**: probe 結果から最適構成を自動生成する AutoML 的フレームワーク
-9. **ハーネスエンジニアリングへの逆輸入**: activation steering の知見を system prompt 設計に活かす
-
----
-
-## 失敗アーカイブ
-
-| 何をした | 結果 | 学び |
-|---------|------|------|
-| einstein を control から除外 | math が悪化 | 壊れた probe がガードレールになる |
-| Bonsai の alpha=0.5 を Gemma 4 に適用 | 壊滅 (-43.94) | hidden_size で正規化必須 |
-| L2 に devil steering (Gemma 4) | devil_edge -21.8 | 浅い層は distortion リスク |
-| 34 flip 全部適用 | math_sum +0.130 | 2 flip だけの方が +0.516 |
-| XOR 前の分布で steering 抽出 → XOR 後に適用 | math 悪化 | Adapter 後に Lense を再抽出すべき |
-| Multi-layer Komorebi α=0.5 (Gemma 4, 前回) | 全カテゴリ大幅悪化 | vector 正規化 + alpha schedule が必須 |
+### C. Visible but distant
+7. Speculative decoding + steering: improve draft model accuracy via steering
+8. Automatic scheduling: AutoML-style config generation from minimal probes
+9. Reverse import to harness engineering: apply activation steering insights to system prompt design
 
 ---
 
-## キーワード（検索用）
+## Failure Archive
+
+| Action | Result | Learning |
+|--------|--------|----------|
+| Remove einstein from control | Math degraded | Broken probes act as capability guardrails |
+| Apply Bonsai α=0.5 to Gemma 4 | Catastrophic (-43.94) | Normalize alpha by hidden_size |
+| Steer L2 on Gemma 4 (devil) | devil_edge -21.8 | Shallow layers carry distortion risk |
+| Use all 34 XOR flips | math_sum +0.130 | 2 flips alone score +0.516 |
+| Extract steering pre-XOR, apply post-XOR | Math degraded | Re-extract after Adapter |
+| Multi-layer α=0.5 on Gemma 4 (unnormalized) | All categories degraded | Vector + alpha normalization mandatory |
+
+---
+
+## Keywords
 
 activation steering, CAA, contrastive activation addition, representation engineering,
 E.R.I.S. architecture, Lense, VLIW, pipeline scheduling, alpha scheduling,
@@ -183,5 +178,5 @@ layer skip, constrained multi-layer optimization
 
 ---
 
-*結果と対話する。データを見て「これがヒントだ」と言えること。*
-*推理の質が、技術の到達点を決める。*
+*Converse with results. See a hint where others see a failure.*
+*The quality of reasoning determines the reach of technique.*

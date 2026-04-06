@@ -1,8 +1,8 @@
 # Komorebi
 
-> Light changes the view, not the tree.
+> Steer hidden states, not weights. Depth-scheduled.
 
-Activation steering for small LLMs on Apple Silicon. Layer-aware alpha scheduling with cross-model normalization.
+Activation steering for small LLMs on Apple Silicon.
 
 ## What it does
 
