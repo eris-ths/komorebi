@@ -136,22 +136,59 @@ Gemma 4 E2B: 46.4 tok/s, peak 3.43 GB
 
 ---
 
+## Roadmap
+
+### Phase 1: Foundation (done — 2026-04-06)
+- [x] Core library: steering.py + schedule.py
+- [x] Model auto-detection (Bonsai, Gemma 4)
+- [x] Alpha scheduling + hidden_size normalization
+- [x] Lense risk classification
+- [x] Bonsai-8B full experiment cycle (XOR → Komorebi → multi-vector → MCP)
+- [x] Gemma 4 E2B: baseline comparison + scheduled steering (9/10 improved)
+- [x] Technical Report + Reasoning Card
+- [x] Repository published
+
+### Phase 2: Validation (next)
+- [ ] **Probe expansion**: 16 → 50+ probes. Separate language selection from persona traits in Japanese probes. Add coding, reasoning, safety categories
+- [ ] **Generation test**: Verify logit gap improvements translate to actual generation quality. Integrate repetition_penalty + sampling into SteeredModel
+- [ ] **Alpha exponent ablation**: Compare depth^1.0 / 1.5 / 2.0. Find theoretical grounding or empirical optimum
+- [ ] **Multi-run averaging**: Run each configuration 3+ times to establish baseline stability
+- [ ] **Gemma 4 math steering**: Current config is devil + jp only. Add math at a pure layer
+
+### Phase 3: Benchmark (after Phase 2)
+- [ ] **Standard benchmarks**: MMLU, GSM8K, TruthfulQA — before/after steering comparison
+- [ ] **Cross-model validation**: Test scheduling principles on a third model (Llama 3.2 3B or Phi-3)
+- [ ] **Publish benchmark results**: Update Technical Report with statistically robust numbers
+- [ ] At this point, "accuracy improved" becomes a defensible claim
+
+### Phase 4: Speed
+- [ ] **Layer skip implementation**: Use steering influence map (Δ≈0 layers) as skip candidates
+- [ ] **Actual speed measurement**: tok/s before/after skip on M3
+- [ ] **Dynamic risk**: Replace depth heuristic with hidden-state statistics
+- [ ] **Speculative decoding integration**: Steering to improve draft model quality
+
+### Phase 5: Multimodal + Integration
+- [ ] **Cross-modal steering**: Extract visual steering vectors from Gemma 4 image input
+- [ ] **Automatic scheduling**: AutoML-style config generation from minimal probes
+- [ ] **Harness engineering reverse import**: Apply activation steering insights to system prompt design
+- [ ] **pip installable package**: Proper packaging for external use
+
 ## Next Moves (prioritized)
 
-### A. Immediate
-1. Add math steering to Gemma 4 config (currently devil + jp only)
-2. Generation quality test (logit gap ≠ actual output quality)
-3. Expand to 50+ probes for statistical robustness
+### A. Immediate (next session)
+1. Probe expansion (50+, category-separated)
+2. Generation quality test (does logit gap improvement → better actual output?)
+3. Alpha exponent ablation (1.0 / 1.5 / 2.0)
 
 ### B. Near-term
-4. Layer skip: use steering influence map to identify skippable layers → measure speed
-5. Dynamic risk: hidden-state statistics instead of depth heuristic
-6. Multimodal: steering effects with image input on Gemma 4
+4. Multi-run averaging for baseline stability
+5. Gemma 4 math steering at pure layer
+6. Standard benchmark (MMLU or GSM8K subset)
 
 ### C. Visible but distant
-7. Speculative decoding + steering: improve draft model accuracy via steering
-8. Automatic scheduling: AutoML-style config generation from minimal probes
-9. Reverse import to harness engineering: apply activation steering insights to system prompt design
+7. Layer skip + speed measurement
+8. Multimodal steering
+9. Reverse import to harness engineering
 
 ---
 
