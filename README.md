@@ -9,6 +9,7 @@ Change how a local LLM behaves without retraining. Steering vectors are auto-sca
 Adds direction vectors to hidden states during inference. Weights are not modified.
 
 ```python
+from mlx_vlm import load  # or: from mlx_lm import load
 from komorebi.steering import SteeredModel, SteeringVector, extract_steering_vector
 from komorebi.schedule import compute_effective_alpha, normalize_vector
 
@@ -39,6 +40,8 @@ steered.clear()  # instant restore
 | Gemma 4 E2B (4-bit) | 3.6 GB | mlx-vlm |
 
 Model structure is auto-detected. Should work with any transformer that has `embed_tokens` + `layers` + `norm`.
+
+Bonsai-8B experiments were conducted in a [companion project](https://eris-blog.vercel.app/blog/2026-04-06-komorebi-steering-vectors/); this repo contains the generalized library and Gemma 4 experiments.
 
 ## Install
 
