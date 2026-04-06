@@ -103,7 +103,7 @@ This explains why α=0.5 worked on Bonsai-8B (hidden=4096) but destroyed Gemma 4
 Raw steering vectors have norms varying 6× across layers (7–45 in Gemma 4). We normalize to unit vectors scaled by √hidden_size:
 
 ```python
-v_normalized = (v / ||v||) × √hidden_size
+v_normalized = (v / mx.linalg.norm(v)) * (hidden_size ** 0.5)
 ```
 
 This decouples vector direction (semantic) from magnitude (layer-dependent artifact).
@@ -154,7 +154,7 @@ Hardware: Apple M3 8GB
 |--------|---------------|---------------|----------------|
 | mul_1 Δ | +0.281 | +0.379 | +0.309 |
 | div_1 Δ | -0.043 | -0.098 | +0.285 |
-| Interference | Yes | Yes | **No (resonance)** |
+| Interference | Yes | Yes | **No (non-interference)** |
 
 Key finding: **XOR causes task interference; steering shows non-interference** (tasks that conflicted at weight level coexist at hidden-state level). Whether this constitutes true resonance or shared contrast-pair features requires further investigation.
 
