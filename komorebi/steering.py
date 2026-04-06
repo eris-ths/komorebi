@@ -66,13 +66,25 @@ def _find_model_parts(model):
         embed = inner.embed_tokens if hasattr(inner, 'embed_tokens') else None
         norm = inner.norm if hasattr(inner, 'norm') else None
 
-    # Pattern 2: model.model.language_model (Gemma 4 E2B)
+    # Pattern 2: model.language_model.model (Gemma 4 E2B via mlx-vlm)
+    elif hasattr(model, 'language_model') and hasattr(model.language_model, 'model'):
+        lm = model.language_model
+        lm_inner = lm.model
+        layers = lm_inner.layers if hasattr(lm_inner, 'layers') else None
+        embed = lm_inner.embed_tokens if hasattr(lm_inner, 'embed_tokens') else None
+        norm = lm_inner.norm if hasattr(lm_inner, 'norm') else None
+        inner = lm_inner
+        if hasattr(lm, 'lm_head'):
+            lm_head = lm.lm_head
+
+    # Pattern 2b: model.model.language_model (nested)
     elif hasattr(model, 'model') and hasattr(model.model, 'language_model'):
         lm = model.model.language_model
-        layers = lm.layers if hasattr(lm, 'layers') else None
-        embed = lm.embed_tokens if hasattr(lm, 'embed_tokens') else None
-        norm = lm.norm if hasattr(lm, 'norm') else None
-        inner = lm
+        lm_inner = lm.model if hasattr(lm, 'model') else lm
+        layers = lm_inner.layers if hasattr(lm_inner, 'layers') else None
+        embed = lm_inner.embed_tokens if hasattr(lm_inner, 'embed_tokens') else None
+        norm = lm_inner.norm if hasattr(lm_inner, 'norm') else None
+        inner = lm_inner
 
     # Pattern 3: model.layers (direct)
     elif hasattr(model, 'layers'):
