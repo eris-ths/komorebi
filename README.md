@@ -8,10 +8,17 @@ Change how a local LLM behaves without retraining. Steering vectors are auto-sca
 
 Adds direction vectors to hidden states during inference. Weights are not modified.
 
+```bash
+git clone https://github.com/eris-ths/komorebi.git
+cd komorebi
+pip install mlx-vlm  # or mlx-lm for Bonsai
+```
+
 ```python
 from mlx_vlm import load  # or: from mlx_lm import load
 from komorebi.steering import SteeredModel, SteeringVector, extract_steering_vector
 from komorebi.schedule import compute_effective_alpha, normalize_vector
+import mlx.core as mx
 
 model, processor = load("mlx-community/gemma-4-e2b-it-4bit")
 tokenizer = processor.tokenizer
@@ -26,10 +33,16 @@ v = extract_steering_vector(model, tokenizer,
 v = normalize_vector(v, hidden_size=1536)
 alpha = compute_effective_alpha(layer=18, n_layers=35, hidden_size=1536)
 
-# Apply / remove
+# Apply
 steered = SteeredModel(model)
 steered.add(SteeringVector("devil", 18, v, alpha=alpha))
-steered.clear()  # instant restore
+
+# Use: pass tokens through steered model
+tokens = mx.array(tokenizer.encode("User: Deploy without tests.\nAssistant:"))[None, :]
+output = steered(tokens)  # logits with steering applied
+
+# Remove (instant, complete)
+steered.clear()
 ```
 
 ## Tested models
